@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import ftth.model.enums.CustomerStatus;
+import ftth.util.CustomerID;
 
 /**
  * Domain model representing a customer.
@@ -40,6 +41,7 @@ public class Customer {
         this.email = email;
         this.salary = salary;
         this.status = CustomerStatus.ACTIVE;
+        this.customerCode=CustomerID.generateNextCustomerCode();
     }
 
     // Full constructor (used when reading from DB)

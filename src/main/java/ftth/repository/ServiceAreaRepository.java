@@ -127,4 +127,42 @@ public class ServiceAreaRepository {
             createdAt
         );
     }
+     private static final String FIND_PINCODE_BY_ID_SQL =
+        "SELECT pincode FROM service_areas WHERE service_area_id = ?";
+
+    /**
+     * Find pincode using service_area_id.
+     */
+    public String findPincodeById(Long serviceAreaId) {
+
+        try (Connection conn = DbConnection.getConnection();
+             PreparedStatement ps =
+                     conn.prepareStatement(FIND_PINCODE_BY_ID_SQL)) {
+
+            ps.setLong(1, serviceAreaId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("pincode");
+                }
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException(
+                "Error fetching pincode for serviceAreaId=" + serviceAreaId,
+                e
+            );
+        }
+
+        return null; // not found
+    }
+
 }
+
+
+
+
+   
+
+
+

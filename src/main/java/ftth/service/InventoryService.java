@@ -1,8 +1,7 @@
 package ftth.service;
 import ftth.model.*;
-import ftth.model.dto.OltInventoryDTO;
+import ftth.model.dtos.OltInventoryDTO;
 import ftth.repository.InventoryRepository;
-import ftth.repository.ServiceAreaRepository;
 import java.util.List;
 
 public class InventoryService {
@@ -11,11 +10,9 @@ public class InventoryService {
     private static final int PORTS_PER_SPLITTER = 3;
 
     private final InventoryRepository repo;
-    private final ServiceAreaRepository serviceAreaRepository;
 
-    public InventoryService(InventoryRepository repo,ServiceAreaRepository serviceAreaRepository) {
+    public InventoryService(InventoryRepository repo) {
         this.repo = repo;
-        this.serviceAreaRepository=serviceAreaRepository;
     }
 
     public String addOLT(String pincode, String type, int splitterCount) {
@@ -44,7 +41,7 @@ public class InventoryService {
     public int getPortsPerSplitter() {
         return PORTS_PER_SPLITTER;
     }
-    public boolean checkPincode(Long pincode) {
+public boolean checkPincode(Long pincode) {
     return repo.existsByPincode(pincode);
 }
 
@@ -57,7 +54,7 @@ public int getAvailablePortsByType(Long serviceAreaId, String oltType) {
     }
 
 
-public long[] assignAvailablePort(int pincode, String oltType) {
+public long[] assignAvailablePort(long pincode, String oltType) {
     return repo.assignAvailablePort(pincode, oltType);
 }
 
@@ -65,7 +62,7 @@ public long[] assignAvailablePort(int pincode, String oltType) {
      * Allocate ONE available port for given service area and OLT type.
      * Throws exception if no port is available.
      */
-    public Long allocatePort(Long serviceAreaId, String oltType) {
+public Long allocatePort(Long serviceAreaId, String oltType) {
         Long portId = repo.findAvailablePortId(serviceAreaId, oltType);
         if (portId == null) {
             throw new RuntimeException(
@@ -80,7 +77,7 @@ public long[] assignAvailablePort(int pincode, String oltType) {
     /**
      * Release an allocated port (ASSIGNED → AVAILABLE).
      */
-   public void releasePort(Long portId) {
+public void releasePort(Long portId) {
 
         if (portId == null) {
             throw new IllegalArgumentException("Port ID cannot be null");

@@ -1,34 +1,26 @@
 package ftth.controller;
-
-import java.util.List;
 import java.util.Scanner;
-
-import ftth.model.Customer;
-import ftth.model.Plan;
 import ftth.model.User;
 import ftth.service.*;
-import ftth.util.InputUtil;
 
 public class AdminController {
-    private final UserManagerService userManagerService;
-    private final InventoryService inventoryService;
-   
-    private final PlanService planService;
-    private final CustomerController customerController;
+    private final UserManagerService um;
+    private final PlanAdmin planAdmin;
+    private final CustomerScreenController customerScreenController;
     private final CustomerConnectionController customerConnectionController;
+    private final InventoryController inventoryController;
 
     // 🔹 Constructor (Dependency Injection)
-    public AdminController(CustomerController customerController,CustomerConnectionController customerConnectionController,PlanService planService,InventoryService inventoryService,UserManagerService userManagerService){
-        this.userManagerService=userManagerService;
-        this.inventoryService=inventoryService;
-        this.planService=planService;
-        this.customerController = customerController;
+    public AdminController(InventoryController inventoryController,PlanAdmin planAdmin,CustomerScreenController customerScreenController,CustomerConnectionController customerConnectionController,UserManagerService userManagerService){
+        this.um=userManagerService;
+        this.customerScreenController = customerScreenController;
         this.customerConnectionController=customerConnectionController;
+        this.planAdmin=planAdmin;
+        this.inventoryController=inventoryController;
     }
 
     // 🔹 MAIN HANDLER (NO STATIC ❌)
     public boolean handle(String option, Scanner sc, User currentUser) {
-
         switch (option) {
 
             case "1":
@@ -48,27 +40,27 @@ public class AdminController {
                 return false;
 
             case "5":
-                // doLookup(sc,currentUser);
-                // return false;
+                doLookup(sc,currentUser);
+                return false;
 
             case "6":
-                // doInventory(sc);
-                // return false;
+                doInventory(sc);
+                return false;
 
             case "7":
-                // doMaint(sc);
-                // return false;
+                doMaint(sc);
+                return false;
 
             case "8":
-                // doCapacity(sc);
-                // return false;
+                doCapacity(sc);
+                return false;
 
             case "9":
-                // doPlanAdmin(sc);
-                // return false;
+                doPlanAdmin(sc);
+                return false;
 
             case "A":
-                // doUserMgmt(sc,userManagerService,currentUser);
+                doUserMgmt(sc,currentUser);
                 return false;
 
             case "0":
@@ -100,12 +92,10 @@ private void doMove(Scanner sc,User currUser) {
 customerConnectionController.doDisconnect(sc, currUser);   
 }
 private void doLookup(Scanner sc,User currentUser) {
-    customerController.menu(sc,currentUser);
+    customerScreenController.menu(sc,currentUser);
 }
-
-    static void doInventory(Scanner sc) {
-    InventoryController inventory = new InventoryController();
-    inventory.menu(); 
+private void doInventory(Scanner sc) {
+    inventoryController.menu(); 
 }
 
     private void doMaint(Scanner sc) {
@@ -124,17 +114,16 @@ private void doLookup(Scanner sc,User currentUser) {
     int[] pincodes = {560001, 560002, 110001};
 
     // 🔥 call service
-    // inventoryService.showCapacity(pincodes);
+   
 
     System.out.print("\nPress Enter to continue...");
     sc.nextLine();
 }
 
-     static void doPlanAdmin(Scanner sc) {
-         PlanAdmin admin = new PlanAdmin(sc);
-         admin.handleMenu();
+   void doPlanAdmin(Scanner sc) {
+         planAdmin.handleMenu();
     }
-    private  void doUserMgmt(Scanner sc, UserManagerService um, String currentUser) {
+    private  void doUserMgmt(Scanner sc, User currentUser) {
         while (true) {
             System.out.println("\n--- User Management ---");
             // System.out.println("  [1] List Users");
@@ -185,7 +174,7 @@ private void doLookup(Scanner sc,User currentUser) {
                 case "4": {
                     System.out.print("  Username to delete: ");
                     String uname = sc.nextLine().trim();
-                    if (uname.equalsIgnoreCase(currentUser)) {
+                    if (uname.equalsIgnoreCase(currentUser.getUsername())) {
                         System.out.println(" You cannot delete your own account.");
                         break;
                     }

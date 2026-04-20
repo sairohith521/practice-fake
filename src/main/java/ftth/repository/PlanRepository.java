@@ -13,7 +13,7 @@ import java.util.List;
 
 public class PlanRepository {
 
-    public boolean insertPlan(Plan plan) {
+public boolean insertPlan(Plan plan) {
 
     String sql =
         "INSERT INTO plans " +
@@ -46,7 +46,7 @@ public class PlanRepository {
         throw new RuntimeException("Error adding plan", e);
     }
 }
-    public List<Plan> findAllPlans() {
+public List<Plan> findAllPlans() {
         String sql =
             "SELECT plan_id, plan_name, speed_label, data_limit_label, ott_count, monthly_price, olt_type, is_active " +
             "FROM plans ORDER BY plan_id";
@@ -64,25 +64,33 @@ public class PlanRepository {
         return plans;
     }
 
-    public List<Plan> findActivePlans() {
-        String sql =
-            "SELECT plan_id, plan_name, speed_label, data_limit_label, ott_count, monthly_price, olt_type, is_active " +
-            "FROM plans WHERE is_active = TRUE ORDER BY plan_id";
+public List<Plan> findActivePlans() {
 
-        List<Plan> plans = new ArrayList<>();
-        try (Connection con = DbConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                plans.add(toPlan(rs));
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException("Error loading active plans", e);
+    String sql =
+        "SELECT plan_id, plan_code, plan_name, speed_label, data_limit_label, " +
+        "ott_count, monthly_price, olt_type, is_active, created_at " +
+        "FROM plans " +
+        "WHERE is_active = TRUE " +
+        "ORDER BY plan_id";
+
+    List<Plan> plans = new ArrayList<>();
+
+    try (Connection con = DbConnection.getConnection();
+         PreparedStatement ps = con.prepareStatement(sql);
+         ResultSet rs = ps.executeQuery()) {
+
+        while (rs.next()) {
+            plans.add(toPlan(rs));
         }
-        return plans;
+
+    } catch (SQLException e) {
+        throw new RuntimeException("Error loading active plans", e);
     }
 
-    public Plan findPlanById(long id) {
+    return plans;
+}
+
+public Plan findPlanById(long id) {
         String sql =
             "SELECT plan_id, plan_name, speed_label, data_limit_label, ott_count, monthly_price, olt_type, is_active " +
             "FROM plans WHERE plan_id = ?";
@@ -100,7 +108,7 @@ public class PlanRepository {
         }
         return null;
     }
-    private Plan toPlan(ResultSet rs) throws SQLException {
+private Plan toPlan(ResultSet rs) throws SQLException {
 
     return new Plan(
         rs.getLong("plan_id"),
@@ -116,7 +124,7 @@ public class PlanRepository {
     );
 }
 
-    public boolean updatePlan(long planId, Plan updatedPlan) {
+public boolean updatePlan(long planId, Plan updatedPlan) {
 
     String sql =
         "UPDATE plans " +
@@ -148,7 +156,7 @@ public class PlanRepository {
     }
 }
 
-    public boolean deletePlan(long id) {
+public boolean deletePlan(long id) {
         String checkSql = "SELECT COUNT(*) FROM customer_connections WHERE plan_id = ? AND connection_status = 'ACTIVE'";
         String deleteSql = "DELETE FROM plans WHERE plan_id = ?";
 
@@ -170,7 +178,7 @@ public class PlanRepository {
         }
     }
 
-    public boolean togglePlanStatus(long planId, boolean newStatus) {
+public boolean togglePlanStatus(long planId, boolean newStatus) {
 
     String sql = "UPDATE plans SET is_active = ? WHERE plan_id = ?";
 
@@ -186,56 +194,34 @@ public class PlanRepository {
         throw new RuntimeException("Error toggling plan status for planId=" + planId, e);
     }
 }
-    private static final String FIND_BY_ID_SQL =
-        "SELECT plan_id, plan_code, plan_name, speed_label, data_limit_label, " +
-        "ott_count, monthly_price, olt_type, is_active, created_at " +
-        "FROM plans WHERE plan_id = ?";
+   
 
-    /**
-     * Find plan by plan ID.
-     */
-    public Plan findById(Long planId) {
+     private static final String FIND_BY_ID_SQL =
+    "SELECT plan_id, plan_code, plan_name, speed_label, data_limit_label, " +
+    "ott_count, monthly_price, olt_type, is_active, created_at " +
+    "FROM plans WHERE plan_id = ?";
 
-        try (Connection conn = DbConnection.getConnection();
-             PreparedStatement ps =
-                 conn.prepareStatement(FIND_BY_ID_SQL)) {
+public Plan findById(Long planId) {
 
-            ps.setLong(1, planId);
+    try (Connection conn = DbConnection.getConnection();
+         PreparedStatement ps = conn.prepareStatement(FIND_BY_ID_SQL)) {
 
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return mapRow(rs);
-                }
+        ps.setLong(1, planId);
+
+        try (ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                return toPlan(rs);   // ✅ use correct mapper
             }
-
-        } catch (SQLException e) {
-            throw new RuntimeException(
-                "Error fetching plan with ID: " + planId, e
-            );
         }
 
-        return null;
-    }
-
-    /**
-     * Map DB row to Plan model.
-     */
-    private Plan mapRow(ResultSet rs) throws SQLException {
-
-        return new Plan(
-            rs.getLong("plan_id"),
-            rs.getString("plan_code"),
-            rs.getString("plan_name"),
-            rs.getString("speed_label"),
-            rs.getString("data_limit_label"),
-            rs.getInt("ott_count"),
-            rs.getBigDecimal("monthly_price"),
-            rs.getString("olt_type"),
-            rs.getBoolean("is_active"),
-            rs.getTimestamp("created_at").toLocalDateTime()
+    } catch (SQLException e) {
+        throw new RuntimeException(
+            "Error fetching plan with ID: " + planId, e
         );
     }
 
+    return null;
+}
 }
 
 

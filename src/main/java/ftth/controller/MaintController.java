@@ -3,15 +3,14 @@ package ftth.controller;
 import java.util.Scanner;
 
 import ftth.model.User;
-import ftth.service.*;
 
 public class MaintController {
-    private InventoryService inventoryService;
-    private PlanService planService;
+    private final PlanAdmin planAdmin;
+    private final InventoryController inventoryController;
     // 🔹 Constructor (Dependency Injection)
-    public MaintController(InventoryService inventoryService,PlanService planService) {
-        this.inventoryService = inventoryService;
-        this.planService=planService;
+    public MaintController(InventoryController inventoryController,PlanAdmin planAdmin) {
+        this.planAdmin=planAdmin;
+        this.inventoryController=inventoryController;
     }
 
     // 🔹 MAIN HANDLER (NO STATIC ❌)
@@ -49,9 +48,8 @@ public class MaintController {
     // 🔥 METHODS (move your logic here)
     // =========================================================
 
-    static void doInventory(Scanner sc) {
-    InventoryController inventory = new InventoryController();
-    inventory.menu(); 
+    void doInventory(Scanner sc) {
+    inventoryController.menu(); 
 }
 
     private void doMaint(Scanner sc) {
@@ -69,15 +67,14 @@ public class MaintController {
 
     int[] pincodes = {560001, 560002, 110001};
 
-    // 🔥 call service
-    // inventoryService.(pincodes);
+    // 
+    // i
 
     System.out.print("\nPress Enter to continue...");
     sc.nextLine();
 }
 
-     static void doPlanAdmin(Scanner sc) {
-         PlanAdmin admin = new PlanAdmin(sc);
-         admin.handleMenu();
+     void doPlanAdmin(Scanner sc) {
+         planAdmin.handleMenu();
     }
 }

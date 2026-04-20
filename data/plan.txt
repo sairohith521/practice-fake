@@ -1,3 +1,0 @@
-1,Silver,2GBPS,Unlimited Internet,3,499.0,OLT300,false
-2,Platinum,35Gbps,Unlimited Internet,4,899.0,OLT300,false
-3,Gold,500Mbps,30Gb,1,399.0,OLT300,true

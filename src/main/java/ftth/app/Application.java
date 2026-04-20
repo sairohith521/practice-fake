@@ -1,11 +1,7 @@
 package ftth.app;
-
 import java.util.Scanner;
 import ftth.service.*;
-import ftth.util.InputUtil;
 import ftth.controller.*;
-import ftth.model.Role;
-import ftth.model.User;
 import ftth.repository.*;
 /**
  * Main — Aaha Telecom FTTH Management System
@@ -19,7 +15,6 @@ import ftth.repository.*;
 
 public class Application {
            private final Scanner sc;
-           private User currentUser;
            // ===============================
            // Repositories
            // ===============================
@@ -51,8 +46,9 @@ public class Application {
            private final CSRController csrController;
            private final MaintController maintController;
            private final UserManagementController userManagementController;
-           private final CustomerController customerController;
+           private final CustomerScreenController customerScreenController;
            private final PlanAdmin planAdmin;
+           private final InventoryController inventoryController;
            // ===============================
            // Constructor (DI container)
            // ===============================
@@ -72,87 +68,24 @@ public class Application {
                // ---------- services ----------
                this.planService = new PlanService(planRepository);
                this.customerService=new CustomerService(customerRepository);
-               this.inventoryService = new InventoryService(inventoryRepository,serviceAreaRepository);
+               this.inventoryService = new InventoryService(inventoryRepository);
                this.emailService = new EmailService(emailLogRepository);
                this.userManagerService = new UserManagerService(userRepository,roleRepository);
                this.serviceAreaService=new ServiceAreaService(serviceAreaRepository);
                this.billService=new BillService(billRepository);
                this.customerConnectionService = new CustomerConnectionService(customerService,customerRepository,customerConnectionRepository,planService,inventoryService,billRepository,serviceAreaService,emailService);
                // ---------- controllers ----------
-                this.customerController=new CustomerController(customerService,billService, emailService, planService, customerConnectionService);
-               this.customerConnectionController =new CustomerConnectionController(serviceAreaService,customerConnectionService,planService,inventoryService);
-               this.adminController =new AdminController(customerController,customerConnectionController,planService,inventoryService,userManagerService);
-               this.csrController =new CSRController(customerConnectionController,customerConnectionService,planService,inventoryService);
-               this.maintController =new MaintController(inventoryService,planService);
-               this.userManagementController=new UserManagementController(userManagerService);
                this.planAdmin=new PlanAdmin(planService,sc);
+               this.inventoryController=new InventoryController(inventoryService);
+               this.customerScreenController=new CustomerScreenController(customerService,billService, emailService, planService, customerConnectionService);
+               this.customerConnectionController =new CustomerConnectionController(serviceAreaService,customerConnectionService,planService,inventoryService);
+               this.adminController =new AdminController(inventoryController,planAdmin,customerScreenController,customerConnectionController,userManagerService);
+               this.csrController =new CSRController(customerScreenController,customerConnectionController);
+               this.maintController =new MaintController(inventoryController,planAdmin);
+               this.userManagementController=new UserManagementController(userManagerService,adminController,csrController,maintController);  
            }
-    public void start() {
-        while (true) {
-            currentUser = userManagementController.login(sc);
-            if (currentUser == null) continue;
-            Role role = userManagerService.getRole(currentUser);
-            boolean logout = false;
-            while (!logout) {
-                printMenu(role.getRoleCode());
-                String option = InputUtil.readMenuOption(sc, "Option: ");
-                switch (role.getRoleCode()){
-                    case "ADMIN":
-                        logout = adminController.handle(option, sc, currentUser);
-                        break;
-                    case "CSR":
-                        // logout = csrController.handle(option, sc, currentUser);
-                        break;
-                    case "MAINT":
-                        // logout = maintController.handle(option, sc, currentUser);
-                        break;
-                    default:
-                        logout = true;
-                }
-            }
-        }
-    }
 
-
-    // 🔹 MENU (belongs here)
-    private void printMenu(String role) {
-    System.out.println("\n============================================");
-    System.out.println("          Welcome to Aaha Telecom");
-    System.out.println("============================================");
-
-    switch (role) {
-        case "ADMIN":
-            System.out.println("  [1] Add (New Install)");
-            System.out.println("  [2] Move");
-            System.out.println("  [3] Change Plan");
-            System.out.println("  [4] Disconnect");
-            System.out.println("  [5] Customers (Lookup / Config / Bill)");
-            System.out.println("  [6] Inventory Admin");
-            System.out.println("  [7] Maintenance");
-            System.out.println("  [8] Capacity Dashboard");
-            System.out.println("  [9] Plan Admin");
-            System.out.println("  [A] User Management");
-            System.out.println("  [0] Logout");
-            break;
-
-        case "CSR":
-            System.out.println("  [1] Add (New Install)");
-            System.out.println("  [2] Move");
-            System.out.println("  [3] Change Plan");
-            System.out.println("  [4] Disconnect");
-            System.out.println("  [5] Customers (Lookup / Config / Bill)");
-            System.out.println("  [0] Logout");
-            break;
-
-        case "MAINT":
-            System.out.println("  [1] Inventory Admin");
-            System.out.println("  [2] Maintenance");
-            System.out.println("  [3] Capacity Dashboard");
-            System.out.println("  [4] Plan Admin");
-            System.out.println("  [0] Logout");
-            break;
-    }
-
-    System.out.println("--------------------------------------------");
-}
+      public void start(){
+           userManagementController.start(sc);
+       }
 }

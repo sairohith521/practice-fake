@@ -19,136 +19,136 @@ public class BillRepository {
     // CREATE
     // ===============================
     private static final String INSERT_SQL =
-        "INSERT INTO bills (" +
-        "bill_no, customer_id, connection_id, bill_date, due_date, " +
-        "plan_charge, gst_amount, total_amount, bill_status" +
-        ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    "INSERT INTO bills (" +
+    "bill_no, customer_id, connection_id, bill_date, due_date, " +
+    "plan_charge, gst_amount, total_amount, bill_status" +
+    ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-    public void insert(Bill bill) {
+public void insert(Bill bill) {
 
-        try (Connection conn = DbConnection.getConnection();
-             PreparedStatement ps =
-                 conn.prepareStatement(INSERT_SQL, Statement.RETURN_GENERATED_KEYS)) {
+    try (Connection conn = DbConnection.getConnection();   // ✅ FIXED
+         PreparedStatement ps =
+             conn.prepareStatement(INSERT_SQL, Statement.RETURN_GENERATED_KEYS)) {
 
-            ps.setString(1, bill.getBillNo());
-            ps.setLong(2, bill.getCustomerId());
-            ps.setLong(3, bill.getConnectionId());
-            ps.setDate(4, Date.valueOf(bill.getBillDate()));
-            ps.setDate(5, Date.valueOf(bill.getDueDate()));
-            ps.setBigDecimal(6, bill.getPlanCharge());
-            ps.setBigDecimal(7, bill.getGstAmount());
-            ps.setBigDecimal(8, bill.getTotalAmount());
-            ps.setString(9, bill.getBillStatus().name());
+        ps.setString(1, bill.getBillNo());
+        ps.setLong(2, bill.getCustomerId());
+        ps.setLong(3, bill.getConnectionId());
+        ps.setDate(4, Date.valueOf(bill.getBillDate()));
+        ps.setDate(5, Date.valueOf(bill.getDueDate()));
+        ps.setBigDecimal(6, bill.getPlanCharge());
+        ps.setBigDecimal(7, bill.getGstAmount());
+        ps.setBigDecimal(8, bill.getTotalAmount());
+        ps.setString(9, bill.getBillStatus().name());
 
-            ps.executeUpdate();
+        ps.executeUpdate();
 
-            try (ResultSet rs = ps.getGeneratedKeys()) {
-                if (rs.next()) {
-                    bill.setBillId(rs.getLong(1));
-                }
+        try (ResultSet rs = ps.getGeneratedKeys()) {
+            if (rs.next()) {
+                bill.setBillId(rs.getLong(1));
             }
-
-        } catch (SQLException e) {
-            throw new RuntimeException("Error inserting bill", e);
         }
-    }
 
+    } catch (SQLException e) {
+        throw new RuntimeException("Error inserting bill", e);
+    }
+}
     // ===============================
     // READ — BY BILL ID
     // ===============================
     private static final String FIND_BY_ID_SQL =
-        "SELECT * FROM bills WHERE bill_id = ?";
+    "SELECT * FROM bills WHERE bill_id = ?";
 
-    public Bill findById(Long billId) {
+public Bill findById(Long billId) {
 
-        try (Connection conn = DbConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(FIND_BY_ID_SQL)) {
+    try (Connection conn = DbConnection.getConnection();   // ✅ FIXED
+         PreparedStatement ps = conn.prepareStatement(FIND_BY_ID_SQL)) {
 
-            ps.setLong(1, billId);
+        ps.setLong(1, billId);
 
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return mapRow(rs);
-                }
+        try (ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                return mapRow(rs);   // ✅ use existing Bill mapper
             }
-
-        } catch (SQLException e) {
-            throw new RuntimeException("Error fetching bill", e);
         }
 
-        return null;
+    } catch (SQLException e) {
+        throw new RuntimeException(
+            "Error fetching bill with ID: " + billId, e
+        );
     }
 
+    return null;
+}
     // ===============================
     // READ — BY CUSTOMER
     // ===============================
     private static final String FIND_BY_CUSTOMER_SQL =
-        "SELECT * FROM bills WHERE customer_id = ? ORDER BY bill_date DESC";
+    "SELECT * FROM bills WHERE customer_id = ? ORDER BY bill_date DESC";
 
-    public List<Bill> findByCustomerId(Long customerId) {
+public List<Bill> findByCustomerId(Long customerId) {
 
-        List<Bill> bills = new ArrayList<>();
+    List<Bill> bills = new ArrayList<>();
 
-        try (Connection conn = DbConnection.getConnection();
-             PreparedStatement ps =
-                 conn.prepareStatement(FIND_BY_CUSTOMER_SQL)) {
+    try (Connection conn = DbConnection.getConnection();   // ✅ FIXED
+         PreparedStatement ps =
+             conn.prepareStatement(FIND_BY_CUSTOMER_SQL)) {
 
-            ps.setLong(1, customerId);
+        ps.setLong(1, customerId);
 
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    bills.add(mapRow(rs));
-                }
+        try (ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                bills.add(mapRow(rs));   // ✅ correct mapper
             }
-
-        } catch (SQLException e) {
-            throw new RuntimeException("Error fetching bills", e);
         }
 
-        return bills;
+    } catch (SQLException e) {
+        throw new RuntimeException(
+            "Error fetching bills for customerId=" + customerId, e
+        );
     }
+
+    return bills;
+}
 
     // ===============================
     // UPDATE — MARK AS PAID
     // ===============================
     private static final String MARK_PAID_SQL =
-        "UPDATE bills SET bill_status = 'PAID' WHERE bill_id = ?";
+    "UPDATE bills SET bill_status = 'PAID' WHERE bill_id = ?";
 
-    public void markAsPaid(Long billId) {
+public void markAsPaid(Long billId) {
 
-        try (Connection conn = DbConnection.getConnection();
-             PreparedStatement ps =
-                 conn.prepareStatement(MARK_PAID_SQL)) {
+    try (Connection conn = DbConnection.getConnection();   // ✅ FIXED
+         PreparedStatement ps =
+             conn.prepareStatement(MARK_PAID_SQL)) {
 
-            ps.setLong(1, billId);
-            ps.executeUpdate();
+        ps.setLong(1, billId);
+        ps.executeUpdate();
 
-        } catch (SQLException e) {
-            throw new RuntimeException("Error marking bill as PAID", e);
-        }
+    } catch (SQLException e) {
+        throw new RuntimeException("Error marking bill as PAID", e);
     }
-
+}
     // ===============================
     // UPDATE — MARK AS OVERDUE
     // ===============================
     private static final String MARK_OVERDUE_SQL =
-        "UPDATE bills SET bill_status = 'OVERDUE' " +
-        "WHERE bill_id = ? AND bill_status = 'GENERATED'";
+    "UPDATE bills SET bill_status = 'OVERDUE' " +
+    "WHERE bill_id = ? AND bill_status = 'GENERATED'";
 
-    public void markAsOverdue(Long billId) {
+public void markAsOverdue(Long billId) {
 
-        try (Connection conn = DbConnection.getConnection();
-             PreparedStatement ps =
-                 conn.prepareStatement(MARK_OVERDUE_SQL)) {
+    try (Connection conn = DbConnection.getConnection();   // ✅ FIXED
+         PreparedStatement ps =
+             conn.prepareStatement(MARK_OVERDUE_SQL)) {
 
-            ps.setLong(1, billId);
-            ps.executeUpdate();
+        ps.setLong(1, billId);
+        ps.executeUpdate();
 
-        } catch (SQLException e) {
-            throw new RuntimeException("Error marking bill as OVERDUE", e);
-        }
+    } catch (SQLException e) {
+        throw new RuntimeException("Error marking bill as OVERDUE", e);
     }
-
+}
     // ===============================
     // DELETE — ❌ NOT ALLOWED
     // ===============================
@@ -159,20 +159,20 @@ public class BillRepository {
     // ===============================
     private Bill mapRow(ResultSet rs) throws SQLException {
 
-        return new Bill(
-            rs.getLong("bill_id"),
-            rs.getString("bill_no"),
-            rs.getLong("customer_id"),
-            rs.getLong("connection_id"),
-            rs.getDate("bill_date").toLocalDate(),
-            rs.getDate("due_date").toLocalDate(),
-            rs.getBigDecimal("plan_charge"),
-            rs.getBigDecimal("gst_amount"),
-            rs.getBigDecimal("total_amount"),
-            BillStatus.valueOf(rs.getString("bill_status")),
-            rs.getTimestamp("created_at").toLocalDateTime()
-        );
-    }
+    return new Bill(
+        rs.getLong("bill_id"),
+        rs.getString("bill_no"),
+        rs.getLong("customer_id"),
+        rs.getLong("connection_id"),
+        rs.getDate("bill_date").toLocalDate(),
+        rs.getDate("due_date").toLocalDate(),
+        rs.getBigDecimal("plan_charge"),
+        rs.getBigDecimal("gst_amount"),
+        rs.getBigDecimal("total_amount"),
+        BillStatus.valueOf(rs.getString("bill_status")),
+        rs.getTimestamp("created_at").toLocalDateTime()
+    );
+}
     
 }
 

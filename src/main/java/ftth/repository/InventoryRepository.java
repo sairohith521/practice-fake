@@ -2,6 +2,8 @@ package ftth.repository;
 
 import ftth.config.DbConnection;
 import ftth.model.*;
+import ftth.model.dtos.OltInventoryDTO;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -463,46 +465,51 @@ public int getAvailablePorts(int pincode) {
     // SQL: Find ONE available port
     // ===============================
     private static final String FIND_AVAILABLE_PORT_SQL =
-        "SELECT p.port_id " +
-        "FROM ports p " +
-        "JOIN splitters s ON p.splitter_id = s.splitter_id " +
-        "JOIN olts o ON s.olt_id = o.olt_id " +
-        "WHERE p.port_status = 'AVAILABLE' " +
-        "AND s.is_active = TRUE " +
-        "AND o.is_active = TRUE " +
-        "AND o.service_area_id = ? " +
-        "AND o.olt_type = ? " +
-        "LIMIT 1";
-    // ===============================
-    // SQL: Update port status
-    // ===============================
-    private static final String UPDATE_PORT_STATUS_SQL =
-        "UPDATE ports SET port_status = 'ASSIGNED' WHERE port_id = ?";
-    /**
-     * Find one available port id.
-     */
-    public Long findAvailablePortId(Long serviceAreaId, String oltType) {
-        try (Connection conn = DbConnection.getConnection();
-             PreparedStatement ps =conn.prepareStatement(FIND_AVAILABLE_PORT_SQL)) {
-            ps.setLong(1, serviceAreaId);
-            ps.setString(2, oltType);
+    "SELECT p.port_id " +
+    "FROM ports p " +
+    "JOIN splitters s ON p.splitter_id = s.splitter_id " +
+    "JOIN olts o ON s.olt_id = o.olt_id " +
+    "WHERE p.port_status = 'AVAILABLE' " +
+    "AND s.is_active = TRUE " +
+    "AND o.is_active = TRUE " +
+    "AND o.service_area_id = ? " +
+    "AND o.olt_type = ? " +
+    "LIMIT 1";
 
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getLong("port_id");
-                }
+// ===============================
+// SQL: Update port status
+// ===============================
+private static final String UPDATE_PORT_STATUS_SQL =
+    "UPDATE ports SET port_status = 'ASSIGNED' WHERE port_id = ?";
+
+/**
+ * Find one available port id.
+ */
+public Long findAvailablePortId(Long serviceAreaId, String oltType) {
+
+    try (Connection conn = DbConnection.getConnection();   // ✅ FIXED
+         PreparedStatement ps =
+             conn.prepareStatement(FIND_AVAILABLE_PORT_SQL)) {
+
+        ps.setLong(1, serviceAreaId);
+        ps.setString(2, oltType);
+
+        try (ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                return rs.getLong("port_id");
             }
-
-        } catch (SQLException e) {
-            throw new RuntimeException(
-                "Error finding available port for serviceAreaId="
-                    + serviceAreaId + ", oltType=" + oltType,
-                e
-            );
         }
 
-        return null;
+    } catch (SQLException e) {
+        throw new RuntimeException(
+            "Error finding available port for serviceAreaId="
+                + serviceAreaId + ", oltType=" + oltType,
+            e
+        );
     }
+
+    return null;
+}
 
     /**
      * Mark port as ASSIGNED.
@@ -550,7 +557,7 @@ public int getAvailablePorts(int pincode) {
         String sql = "SELECT pincode FROM service_areas ORDER BY pincode";
         List<String> pincodes = new ArrayList<>();
 
-        try (Connection con = DBConnection.getConnection();
+        try (Connection con = DbConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
@@ -579,7 +586,7 @@ public int getAvailablePorts(int pincode) {
 
         List<OltInventoryDTO> result = new ArrayList<>();
 
-        try (Connection con = DBConnection.getConnection();
+        try (Connection con = DbConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
 
             ps.setString(1, pincode);
@@ -611,9 +618,9 @@ public int getAvailablePorts(int pincode) {
         return null;
     }
 
-    public boolean existsByPincode(Long pincode) {
+public boolean existsByPincode(Long pincode) {
         String sql = "SELECT COUNT(*) FROM service_areas WHERE pincode = ?";
-        try (Connection con = DBConnection.getConnection();
+        try (Connection con = DbConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, String.valueOf(pincode));
             ResultSet rs = ps.executeQuery();

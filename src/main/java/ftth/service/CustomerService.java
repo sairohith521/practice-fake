@@ -46,7 +46,7 @@ public class CustomerService {
     /**
      * Find existing customer or create a new one.
      */
-    public Customer findOrCreateCustomer(String name,
+public Customer findOrCreateCustomer(String name,
                                          String email,
                                          double salary) {
 

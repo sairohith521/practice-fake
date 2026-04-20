@@ -181,13 +181,8 @@ private static final String FIND_BY_USERNAME_SQL =
         "FROM users " +
         "WHERE username = ?";
 
-    /**
-     * Find user by username.
-     *
-     * @param username login username
-     * @return User if found, else null
-     */
-    public User findByUsername(String username) {
+
+ public User findByUsername(String username) {
 
         try (Connection conn = DbConnection.getConnection();
              PreparedStatement ps =
@@ -216,7 +211,7 @@ private static final String FIND_BY_USERNAME_SQL =
     // Private Mapper
     // ===============================
 
-    private User mapRowToUser(ResultSet rs)
+private User mapRowToUser(ResultSet rs)
             throws SQLException {
 
         Long userId = rs.getLong("user_id");

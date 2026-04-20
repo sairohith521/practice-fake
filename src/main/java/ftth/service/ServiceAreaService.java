@@ -40,6 +40,7 @@ public class ServiceAreaService {
         }
 
         if (!area.isActive()) {
+            area=null;
             throw new RuntimeException(
                 "Service area is inactive for pincode: " + pincode
             );
@@ -53,30 +54,19 @@ public class ServiceAreaService {
      * @param pincode pincode entered by user
      * @return true if service area exists and is active
      */
-    public boolean isServiceAvailable(int pincode) {
+    public boolean isServiceAvailable(long pincode) {
         ServiceArea area = serviceAreaRepository.findByPincode(pincode);
         return area != null && area.isActive();
     }
+    
+ public String getPincode(Long serviceAreaId) {
 
-    /**
-     * Get active service area or throw exception.
-     * Useful for connection establishment.
-     */
-    public ServiceArea getActiveServiceArea(int pincode) {
-        ServiceArea area = serviceAreaRepository.findByPincode(pincode);
-
-        if (area == null) {
-            throw new RuntimeException(
-                "Service not available in pincode: " + pincode
-            );
+        if (serviceAreaId == null) {
+            throw new IllegalArgumentException("Service area id cannot be null");
         }
 
-        if (!area.isActive()) {
-            throw new RuntimeException(
-                "Service area is inactive for pincode: " + pincode
-            );
-        }
-
-        return area;
+        return serviceAreaRepository.findPincodeById(serviceAreaId);
     }
+
+
 }

@@ -7,9 +7,8 @@ import ftth.model.CustomerConnection;
 import ftth.model.Plan;
 import ftth.model.ServiceArea;
 import ftth.model.User;
-import ftth.model.dto.AddConnectionRequest;
+import ftth.model.dtos.AddConnectionRequest;
 import ftth.service.CustomerConnectionService;
-import ftth.service.CustomerService;
 import ftth.service.InventoryService;
 import ftth.service.PlanService;
 import ftth.service.ServiceAreaService;
@@ -28,7 +27,7 @@ public class CustomerConnectionController {
         this.serviceAreaService=serviceAreaService;
         
     }
-    void handleAdd(Scanner sc,User currentUser){
+ public void handleAdd(Scanner sc,User currentUser){
        System.out.println("\n--- New Connection ---");
        List<Plan> plans = planService.getActivePlans();
     if (plans.isEmpty()) {
@@ -88,7 +87,7 @@ public class CustomerConnectionController {
             System.out.println("Operation cancelled.");
             return;
         }
-       AddConnectionRequest req = new AddConnectionRequest(
+          AddConnectionRequest req = new AddConnectionRequest(
             name,
             selectedPlan.getPlanId(),
             salary,
@@ -99,7 +98,7 @@ public class CustomerConnectionController {
     customerConnectionService.createConnection(req,currentUser.getUserId());
     System.out.println(" Connection created successfully.");
     }
-  public void updateCustomerConnection(Scanner sc, User currentUser) {
+ public void updateCustomerConnection(Scanner sc, User currentUser) {
 
     System.out.println("\n--- Move Customer ---");
 
@@ -118,8 +117,8 @@ public class CustomerConnectionController {
         System.out.println("No active connection found.");
         return;
     }
-
-    System.out.println("Current Pincode : " + connection.getServiceAreaId());
+    String pincode=serviceAreaService.getPincode(connection.getServiceAreaId());
+    System.out.println("Current Pincode : " + pincode);
     System.out.println("Current Port ID : " + connection.getPortId());
 
     // 3️⃣ Read new pincode

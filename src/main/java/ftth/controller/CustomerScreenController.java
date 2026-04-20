@@ -7,17 +7,17 @@ import ftth.util.InputUtil;
 import ftth.controller.*;
 import ftth.model.*;
 import ftth.repository.CustomerRepository;
-public class CustomerController {
+public class CustomerScreenController {
     private final CustomerService customerService;
     private final BillService billService;
     private final EmailService emailService;
     private final CustomerConnectionService customerConnectionService;
     private final PlanService planService;
-    private EmailService email;
+
     private InventoryService inventoryService;
     private CustomerRepository customerRepo;
 
-    public CustomerController(CustomerService customerService,BillService billService,EmailService emailService,PlanService planService,CustomerConnectionService customerConnectionService) {
+    public CustomerScreenController(CustomerService customerService,BillService billService,EmailService emailService,PlanService planService,CustomerConnectionService customerConnectionService) {
         this.customerService = customerService;
         this.billService = billService;
         this.emailService =emailService;
@@ -54,11 +54,10 @@ public class CustomerController {
     // ============================
     private void lookupById(Scanner sc,User currentUser) {
 
-        System.out.print("Enter Customer ID: ");
+        System.out.print("Enter Customer Code: ");
         String customerCode = sc.nextLine().trim().toUpperCase();
 
-        Customer customer =
-                customerService.lookupCustomerByCode(customerCode);
+        Customer customer =customerService.lookupCustomerByCode(customerCode);
 
         if (customer == null) {
             System.out.println("No customer found. Returning to menu.");
@@ -109,15 +108,13 @@ public class CustomerController {
             switch (opt) {
                 case "1":
                     changePlan(sc, customer,currentUser);
-                    customer = customerService
-                            .lookupCustomerByCode(customer.getCustomerCode());
+                    customer = customerService.lookupCustomerByCode(customer.getCustomerCode());
                     printCustomerCard(customer);
                     break;
 
                 case "2":
-                    moveCustomer(sc, customer);
-                    customer = customerService
-                            .lookupCustomerByCode(customer.getCustomerCode());
+                    moveCustomer(sc, customer,currentUser);
+                    customer = customerService.lookupCustomerByCode(customer.getCustomerCode());
                     printCustomerCard(customer);
                     break;
 
@@ -160,8 +157,12 @@ private void changePlan(Scanner sc, Customer customer, User currentUser) {
     }
 
     // 2️⃣ Get current plan
-    Plan currentPlan =
-        planService.findPlanById(connection.getPlanId());
+    Plan currentPlan =planService.findPlanById(connection.getPlanId());
+    if (currentPlan == null) {
+    System.out.println("Current plan not found.");
+    return;
+}
+
 
     System.out.println(
         "\nCurrent Plan : " +
@@ -244,37 +245,82 @@ private void changePlan(Scanner sc, Customer customer, User currentUser) {
     System.out.println("✅ Plan changed successfully.");
 }
 
-    private void moveCustomer(Scanner sc, Customer customer) {
+private void moveCustomer(Scanner sc, Customer customer, User currentUser) {
 
-        System.out.print("Enter new pincode: ");
-        int newPin = Integer.parseInt(sc.nextLine().trim());
-
-        boolean success =
-                customerService.moveCustomer(customer, newPin);
-
-        System.out.println(
-                success ? "Customer moved successfully."
-                        : "Move failed."
-        );
+    // 1️⃣ Read new pincode
+    System.out.print("Enter new pincode: ");
+    long newPincode;
+    try {
+        newPincode = Long.parseLong(sc.nextLine().trim());
+    } catch (NumberFormatException e) {
+        System.out.println("[ERROR] Invalid pincode.");
+        return;
     }
 
-    private void disconnectCustomer(Scanner sc, Customer customer) {
+    // 2️⃣ Read OLT type
+    System.out.print("Enter OLT type (OLT300 / OLT500): ");
+    String oltType = sc.nextLine().trim().toUpperCase();
 
-        System.out.print("Type customer ID to confirm disconnect: ");
-        String confirm = sc.nextLine().trim().toUpperCase();
-
-        if (!confirm.equals(customer.getCustomerCode())) {
-            System.out.println("ID mismatch. Cancelled.");
-            return;
-        }
-
-        boolean success = customerService.disconnect(customer);
-
-        System.out.println(
-                success ? "Customer disconnected."
-                        : "Disconnect failed."
-        );
+    if (!"OLT300".equals(oltType) && !"OLT500".equals(oltType)) {
+        System.out.println("[ERROR] Invalid OLT type.");
+        return;
     }
+
+    // 3️⃣ Get active connection
+    CustomerConnection connection =
+        customerConnectionService.getActiveConnectionByCustomerCode(
+            customer.getCustomerCode()
+        );
+
+    if (connection == null) {
+        System.out.println("No active connection found for this customer.");
+        return;
+    }
+
+    // 4️⃣ Call ONLY the required service method ✅
+    customerConnectionService.updateCustomerConnection(
+        connection,        // existing connection
+        newPincode,        // new pincode
+        oltType,           // new OLT type
+        currentUser.getUserId()
+    );
+
+    System.out.println("✅ Customer moved successfully.");
+}
+
+private void disconnectCustomer(Scanner sc, Customer customer) {
+
+    // Ask for confirmation
+    System.out.print("Type customer ID to confirm disconnect: ");
+    String confirmInput = sc.nextLine().trim().toUpperCase();
+
+    // Validate confirmation
+    boolean confirm = confirmInput.equals(customer.getCustomerCode());
+
+    if (!confirm) {
+        System.out.println("ID mismatch. Cancelled.");
+        return;
+    }
+
+    // Get active connection
+    CustomerConnection connection =
+        customerConnectionService.getActiveConnectionByCustomerCode(
+            customer.getCustomerCode()
+        );
+
+    if (connection == null) {
+        System.out.println("No active connection found for this customer.");
+        return;
+    }
+
+    // ✅ Call REQUIRED service method
+    customerConnectionService.disconnectConnection(
+        connection.getConnectionId(),
+        true
+    );
+
+    System.out.println("✅ Customer disconnected successfully.");
+}
 
     // private void generateBill(Scanner sc, Customer customer) {
 
@@ -301,12 +347,13 @@ private void changePlan(Scanner sc, Customer customer, User currentUser) {
     System.out.println(" Status      : " + c.getStatus());
     System.out.println("+----------------------------------+");
 }
-    private void printCustomerListHeader() {
+   private void printCustomerListHeader() {
+
     System.out.printf(
-        "%-12s | %-20s | %-25s | %-6s | %-8s%n",
-        "Customer ID", "Name", "Email", "Pin", "Status"
+        "%-12s | %-20s | %-25s | %-10s%n",
+        "Customer ID", "Name", "Email", "Status"
     );
-    System.out.println("=".repeat(80));
+    System.out.println("=".repeat(75));
 }
 private void printCustomerRow(Customer c) {
     System.out.printf(

@@ -1,5 +1,6 @@
 package ftth.util;
 
+import java.math.BigDecimal;
 import java.util.Scanner;
 
 public class InputUtil {
@@ -146,4 +147,121 @@ public static long readLong(Scanner sc, String prompt) {
         }
     }
 }
+ // =========================
+    // Plan Name
+    // =========================
+    public static String readPlanName(Scanner sc) {
+        while (true) {
+            System.out.print("Enter Plan Name: ");
+            String name = sc.nextLine().trim();
+            if (ValidationUtil.isValidPlanName(name)) {
+                return name;
+            }
+            System.out.println(
+                "Invalid name. Only letters, numbers and spaces allowed (2-50 chars)."
+            );
+        }
+    }
+
+    // =========================
+    // Speed
+    // =========================
+    public static String readSpeed(Scanner sc) {
+        while (true) {
+            System.out.print("Enter Speed (MBPS): ");
+            String val = sc.nextLine().trim();
+            if (ValidationUtil.isValidSpeed(val)) {
+                return val + "MBPS";
+            }
+            System.out.println(
+                "Invalid speed. Enter a number only (e.g. 300, 500, 1000)."
+            );
+        }
+    }
+
+    // =========================
+    // Data Limit
+    // =========================
+    public static String readDataLimit(Scanner sc) {
+        while (true) {
+            System.out.print("Enter Data Limit (GB) or 'Unlimited': ");
+            String val = sc.nextLine().trim();
+            if (ValidationUtil.isValidDataLimit(val)) {
+                if (val.equalsIgnoreCase("unlimited")) {
+                    return "Unlimited";
+                }
+                return val + "GB";
+            }
+            System.out.println(
+                "Invalid input. Enter a number (e.g. 60) or 'Unlimited'."
+            );
+        }
+    }
+
+    // =========================
+    // OLT Type
+    // =========================
+    public static String readOltType(Scanner sc) {
+        while (true) {
+            System.out.print("Enter OLT Type [OLT300/OLT500]: ");
+            String olt = sc.nextLine().trim().toUpperCase();
+            if (ValidationUtil.isValidOltType(olt)) {
+                return olt;
+            }
+            System.out.println(
+                "Invalid OLT type. Enter OLT300 or OLT500."
+            );
+        }
+    }
+
+    // =========================
+    // Integer input
+    // =========================
+    public static int readInt(Scanner sc) {
+        while (true) {
+            String value = sc.nextLine().trim();
+            try {
+                return Integer.parseInt(value);
+            } catch (NumberFormatException e) {
+                System.out.print("Enter a valid number: ");
+            }
+        }
+    }
+
+    // =========================
+    // Long input
+    // =========================
+    public static long readLong(Scanner sc) {
+        while (true) {
+            String value = sc.nextLine().trim();
+            try {
+                return Long.parseLong(value);
+            } catch (NumberFormatException e) {
+                System.out.print("Enter a valid id: ");
+            }
+        }
+    }
+
+    // =========================
+    // BigDecimal input
+    // =========================
+    public static BigDecimal readBigDecimal(Scanner sc) {
+        while (true) {
+            String value = sc.nextLine().trim();
+            try {
+                return new BigDecimal(value);
+            } catch (NumberFormatException e) {
+                System.out.print("Enter a valid amount: ");
+            }
+        }
+    }
 }
+
+
+
+
+
+
+
+
+   

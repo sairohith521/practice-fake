@@ -13,10 +13,10 @@ public class PlanService {
         this.repo = repo;
     }
 
-    public boolean addPlan(Plan plan) {
+public boolean addPlan(Plan plan) {
         return repo.insertPlan(plan);
     }
-    public void createPlan(Plan plan) {
+public void createPlan(Plan plan) {
 
     boolean inserted = repo.insertPlan(plan);
 
@@ -25,14 +25,13 @@ public class PlanService {
     }
 }
 
-    public List<Plan> getAllPlans() {
+public List<Plan> getAllPlans() {
         return repo.findAllPlans();
     }
-
-    public List<Plan> getActivePlans() {
+public List<Plan> getActivePlans() {
         return repo.findActivePlans();
     }
-    public void printActivePlans(List<Plan> plans) {
+public void printActivePlans(List<Plan> plans) {
 
     if (plans.isEmpty()) {
         System.out.println("No active plans available.");
@@ -52,25 +51,11 @@ public class PlanService {
     }
 }
 
-
-
-    public void viewActivePlans() {
-        List<Plan> plans = repo.findActivePlans();
-        if (plans.isEmpty()) {
-            System.out.println("No enabled plans available.");
-            return;
-        }
-        System.out.println("---- ENABLED PLANS ----");
-        for (Plan p : plans) {
-            System.out.println(p);
-        }
-    }
-    private void showActivePlans() {
+ private void showActivePlans() {
     List<Plan> plans =getActivePlans();
     printActivePlans(plans);
 }
-
-    public void viewAllPlans() {
+public void viewAllPlans() {
         List<Plan> plans = repo.findAllPlans();
         if (plans.isEmpty()) {
             System.out.println("No plans available.");
@@ -82,11 +67,7 @@ public class PlanService {
         }
     }
 
-    public Plan findPlanById(long id) {
-        return repo.findPlanById(id);
-    }
-
-    public void updatePlan(long planId, Plan updatedPlan) {
+public void updatePlan(long planId, Plan updatedPlan) {
 
     Plan existingPlan = repo.findById(planId);
 
@@ -101,21 +82,18 @@ public class PlanService {
     }
 }
 
-    public boolean togglePlan(long id) {
+public boolean togglePlan(long id) {
         Plan plan = repo.findPlanById(id);
         if (plan == null) return false;
         boolean newStatus = !plan.isActive();
         return repo.togglePlanStatus(id, newStatus);
     }
 
-    public boolean deletePlan(long id) {
+public boolean deletePlan(long id) {
         return repo.deletePlan(id);
     }
-      /**
-     * Get an active plan by plan ID.
-     * Throws exception if plan does not exist or is inactive.
-     */
-    public Plan getActivePlan(Long planId) {
+
+public Plan getActivePlan(Long planId) {
 
         if (planId == null) {
             throw new IllegalArgumentException("Plan ID cannot be null");
@@ -136,10 +114,7 @@ public class PlanService {
         return plan;
     }
 
-    /**
-     * Find plan by ID (no active check).
-     */
-    public Plan findPlanById(Long planId) {
+public Plan findPlanById(Long planId) {
         return repo.findById(planId);
     }
 }

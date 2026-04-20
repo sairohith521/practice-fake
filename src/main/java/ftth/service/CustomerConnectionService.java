@@ -1,19 +1,16 @@
 package ftth.service;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.Scanner;
-
+import java.util.List;
 import ftth.model.Bill;
 import ftth.model.Customer;
 import ftth.model.CustomerConnection;
 import ftth.model.Plan;
 import ftth.model.ServiceArea;
-import ftth.model.User;
-import ftth.model.dto.AddConnectionRequest;
+import ftth.model.dtos.AddConnectionRequest;
 import ftth.repository.*;
 import ftth.util.BillUtil;
-import ftth.util.InputUtil;
+
 
 public class CustomerConnectionService {
     private final EmailService email;
@@ -35,7 +32,7 @@ public class CustomerConnectionService {
         this.connectionRepo = customerConnectionRepository;
         this.serviceAreaService=serviceAreaService;
     }
-   public void createConnection(AddConnectionRequest req,Long currentUserId) {
+public void createConnection(AddConnectionRequest req,Long currentUserId) {
     // ===============================
     // 1️⃣ Validate salary (BUSINESS RULE)
     // ===============================
@@ -104,8 +101,8 @@ public class CustomerConnectionService {
     // =================================
     // 7️⃣ Create billing entry (bills)
     // =================================
-    BigDecimal planCharge = selectedPlan.getMonthlyPrice();
-    BigDecimal gstAmount = planCharge.multiply(new BigDecimal("0.18"));
+   BigDecimal planCharge = selectedPlan.getMonthlyPrice();
+   BigDecimal gstAmount = planCharge.multiply(new BigDecimal("0.18"));
 
 Bill bill = new Bill(
     BillUtil.generateBillNo(),
@@ -116,14 +113,11 @@ Bill bill = new Bill(
     planCharge,
     gstAmount
 );
-
-billRepository.insert(bill);
-
-
+// billRepository.insert(bill);
     // =================================
     // 8️⃣ Send confirmation email (NO DB)
     // =================================
-    // emailService.sendConnectionConfirmation(
+    // email.sendConnectionConfirmation(
     //     customer.getEmail(),
     //     connection.getConnectionId(),
     //     selectedPlan.getPlanName(),
@@ -138,15 +132,11 @@ public void updateCustomerConnection(CustomerConnection connection,
                          Long currentUserId) {
 
     // 1️⃣ Validate new service area
-    ServiceArea newArea =
-    serviceAreaService.getActiveServiceArea(newPincode);
+    ServiceArea newArea =serviceAreaService.getActiveServiceArea(newPincode);
+    if(newArea==null)System.out.println("Service not Available..");
 
     // 2️⃣ Allocate new port
-    Long newPortId =
-        inventoryService.allocatePort(
-            newArea.getServiceAreaId(),
-            oltType
-        );
+    Long newPortId =inventoryService.allocatePort(newArea.getServiceAreaId(),oltType );
 
     // 3️⃣ Release old port
     inventoryService.releasePort(connection.getPortId());
@@ -274,7 +264,11 @@ public String[] findConnection(long connectionId) {
 // public void listAllCustomers() {
 //     ftth.listAllCustomers();
 // }
-/**
+public List<Customer> listAllCustomers() {
+    return customerRepo.findAll();
+}
+
+/**admin
  * Fetch a customer connection by connection ID.
  */
 public CustomerConnection getConnectionById(Long connectionId) {
@@ -285,35 +279,18 @@ public CustomerConnection getConnectionById(Long connectionId) {
 
     return connectionRepo.findById(connectionId);
 }
+
+public Customer lookupCustomerById(String customerCode) {
+
+    if (customerCode == null || customerCode.trim().isEmpty()) {
+        throw new IllegalArgumentException("Customer ID cannot be empty");
+    }
+
+    Customer customer = customerRepo.findByCode(customerCode);
+
+    return customer; // may be null if not found
 }
-
-
-
-// public void lookupCustomerById(String custID) {
-
-//     String[] customer = ftth.findCustomer(custID);
-
-//     if (customer == null) {
-//         System.out.println("Not found.");
-//         return;
-//     }
-
-//     System.out.println("\nID      : " + customer[0]);
-//     System.out.println("Name    : " + customer[1]);
-//     System.out.println("Pincode : " + customer[2]);
-//     System.out.println("OLT     : " + customer[3]);
-//     System.out.println("SPL     : " + customer[4]);
-//     System.out.println("Port    : " + customer[5]);
-//     System.out.println("Service : " + customer[6]);
-//     System.out.println("Price   : Rs." + customer[7] + "/month");
-//     System.out.println("Status  : " + customer[8]);
-// }
-
-
-
-
-
-
+}
 
 
 

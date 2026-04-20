@@ -76,7 +76,7 @@ public class FTTH {
             String assignedPort = "";
 
             // Step 2: Generate unique Customer ID
-            String custID = CustomerID.generateID();
+            String custID = CustomerID.generateNextCustomerCode();
 
             while ((line = br.readLine()) != null) {
                 if (line.startsWith("#") || line.trim().isEmpty()) {

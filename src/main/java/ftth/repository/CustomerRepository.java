@@ -228,45 +228,51 @@ public boolean updatePlan(long customerId, long newPlanId) {
 }
 public boolean updateServiceArea(long customerId, int newPincode) {
 
-   String findServiceAreaSql =
+    String findServiceAreaSql =
         "SELECT service_area_id " +
         "FROM service_areas " +
         "WHERE pincode = ? " +
         "AND is_active = TRUE";
 
-   String updateConnectionSql =
+    String updateConnectionSql =
         "UPDATE customer_connections " +
         "SET service_area_id = ? " +
         "WHERE customer_id = ? " +
         "AND connection_status = 'ACTIVE'";
 
-
-    try (Connection con = DbConnection.getConnection()) {
+    try (Connection con = DbConnection.getConnection()) {   // ✅ FIXED
+        con.setAutoCommit(false);
 
         // 1️⃣ Find service_area_id from pincode
         Long serviceAreaId = null;
 
         try (PreparedStatement ps = con.prepareStatement(findServiceAreaSql)) {
             ps.setInt(1, newPincode);
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) {
-                serviceAreaId = rs.getLong("service_area_id");
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    serviceAreaId = rs.getLong("service_area_id");
+                }
             }
         }
 
         if (serviceAreaId == null) {
+            con.rollback();
             return false; // pincode not found
         }
 
         // 2️⃣ Update customer connection
+        int updated;
         try (PreparedStatement ps =
                      con.prepareStatement(updateConnectionSql)) {
 
             ps.setLong(1, serviceAreaId);
             ps.setLong(2, customerId);
-
-            return ps.executeUpdate() > 0;
+            updated = ps.executeUpdate();
         }
+
+        con.commit();
+        return updated > 0;
 
     } catch (Exception e) {
         throw new RuntimeException("Failed to move customer", e);
@@ -303,9 +309,10 @@ private static final String FIND_BY_EMAIL_SQL =
         "FROM customers " +
         "WHERE email = ?";
 
-    private static final String INSERT_SQL =
-        "INSERT INTO customers (full_name, email, salary, status) " +
-        "VALUES (?, ?, ?, ?)";
+   private static final String INSERT_SQL =
+    "INSERT INTO customers " +
+    "(full_name, email, salary, status, customer_code) " +
+    "VALUES (?, ?, ?, ?, ?)";
 
 
     // ===============================
@@ -355,6 +362,7 @@ private static final String FIND_BY_EMAIL_SQL =
             ps.setString(2, customer.getEmail());
             ps.setBigDecimal(3, customer.getSalary());
             ps.setString(4, customer.getStatus().name());
+            ps.setString(5,customer.getCustomerCode());
 
             ps.executeUpdate();
 
@@ -371,8 +379,6 @@ private static final String FIND_BY_EMAIL_SQL =
             );
         }
     }
-
-
     // ===============================
     // Private Mapping Method
     // ===============================

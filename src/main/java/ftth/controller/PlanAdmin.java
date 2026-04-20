@@ -1,10 +1,7 @@
 package ftth.controller;
-
 import ftth.model.Plan;
 import ftth.service.PlanService;
 import ftth.util.InputUtil;
-import ftth.util.ValidationUtil;
-
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Scanner;
@@ -42,7 +39,7 @@ public class PlanAdmin {
                 }
 
                 switch (choice) {
-                    case 1: service.viewActivePlans(); break;
+                    case 1: viewActivePlans(); break;
                     case 2: addPlanFlow(); break;
                     case 3: updatePlanFlow(); break;
                     case 4: togglePlanFlow(); break;
@@ -60,22 +57,50 @@ public class PlanAdmin {
             }
         }
     }
+    private void viewActivePlans() {
 
+    List<Plan> plans = service.getActivePlans();
+
+    if (plans.isEmpty()) {
+        System.out.println("No enabled plans available.");
+        return;
+    }
+
+    System.out.println("---- ENABLED PLANS ----");
+    System.out.printf(
+        "%-6s | %-15s | %-10s | %-18s | %-5s | %-10s | %-8s%n",
+        "ID", "Name", "Speed", "Data", "OTT", "Price", "OLT"
+    );
+    System.out.println("=".repeat(85));
+
+    for (Plan p : plans) {
+        System.out.printf(
+            "%-6d | %-15s | %-10s | %-18s | %-5d | %-10s | %-8s%n",
+            p.getPlanId(),
+            p.getPlanName(),
+            p.getSpeedLabel(),
+            p.getDataLimitLabel(),
+            p.getOttCount(),
+            p.getMonthlyPrice(),
+            p.getOltType()
+        );
+    }
+}
     private void addPlanFlow() {
 
     // 1️⃣ Read inputs
-    String planCode = InputUtil.readString(sc, "Enter Plan Code: ");
-    String planName = readPlanName();
-    String speedLabel = readSpeed();
-    String dataLimitLabel = readDataLimit();
+    String planCode = InputUtil.readString(sc, "Enter Plan Code: ").toUpperCase();
+    String planName = InputUtil.readPlanName(sc);
+    String speedLabel = InputUtil.readSpeed(sc);
+    String dataLimitLabel = InputUtil.readDataLimit(sc);
 
     System.out.print("Enter OTT Count: ");
-    int ottCount = readInt();
+    int ottCount = InputUtil.readInt(sc);
 
     System.out.print("Enter Monthly Price: ");
-    BigDecimal monthlyPrice = readBigDecimal(); // ✅ BigDecimal
+    BigDecimal monthlyPrice = InputUtil.readBigDecimal(sc); // ✅ BigDecimal
 
-    String oltType = readOltType();
+   String oltType = InputUtil.readOltType(sc).toUpperCase();
 
     // 2️⃣ Show summary
     System.out.println("\n--- New Plan Summary ---");
@@ -110,41 +135,13 @@ public class PlanAdmin {
 
     System.out.println("✅ Plan added successfully.");
 }
-private BigDecimal readBigDecimal() {
-    while (true) {
-        try {
-            return new BigDecimal(sc.nextLine().trim());
-        } catch (NumberFormatException e) {
-            System.out.print("Invalid amount. Enter again: ");
-        }
-    }
-}
-private void printActivePlans(List<Plan> plans) {
 
-    if (plans.isEmpty()) {
-        System.out.println("No active plans available.");
-        return;
-    }
-
-    for (Plan p : plans) {
-        System.out.println(
-            p.getPlanId() + ". " +
-            p.getPlanName() +
-            " | Speed: " + p.getSpeedLabel() +
-            " | Data: " + p.getDataLimitLabel() +
-            " | OTTs: " + p.getOttCount() +
-            " | Rs." + p.getMonthlyPrice() +
-            " | OLT: " + p.getOltType()
-        );
-    }
-}
-
-    private void updatePlanFlow() {
+private void updatePlanFlow() {
        // 1️⃣ Show active plans
-    printActivePlans(service.getActivePlans());
+    service.printActivePlans(service.getActivePlans());
 
     System.out.print("\nEnter Plan ID to update: ");
-    long planId = readLong();
+    long planId = InputUtil.readLong(sc);
 
     // 2️⃣ Fetch existing plan
     Plan existing = service.findPlanById(planId);
@@ -163,17 +160,17 @@ private void printActivePlans(List<Plan> plans) {
     );
 
     // 3️⃣ Read updated values
-    String planName = readPlanName();
-    String speedLabel = readSpeed();
-    String dataLimitLabel = readDataLimit();
+    String planName = InputUtil.readPlanName(sc);
+    String speedLabel = InputUtil.readSpeed(sc);
+    String dataLimitLabel = InputUtil.readDataLimit(sc);
 
     System.out.print("Enter new OTT Count: ");
-    int ottCount = readInt();
+    int ottCount = InputUtil.readInt(sc);
 
     System.out.print("Enter new Monthly Price: ");
-    BigDecimal monthlyPrice = readBigDecimal(); // ✅ BigDecimal
+    BigDecimal monthlyPrice = InputUtil.readBigDecimal(sc); // ✅ BigDecimal
 
-    String oltType = readOltType();
+    String oltType = InputUtil.readOLTType(sc);
 
     // 4️⃣ Summary
     System.out.println("\n--- Update Summary ---");
@@ -208,12 +205,11 @@ private void printActivePlans(List<Plan> plans) {
     System.out.println("✅ Plan updated successfully.");
 }
 
-
-    private void togglePlanFlow() {
+private void togglePlanFlow() {
         service.viewAllPlans();
 
         System.out.print("\nEnter Plan ID to Enable/Disable: ");
-        long id = readLong();
+        long id =InputUtil.readLong(sc);
 
         Plan plan = service.findPlanById(id);
         if (plan == null) {
@@ -246,7 +242,7 @@ private void printActivePlans(List<Plan> plans) {
         service.viewAllPlans();
 
         System.out.print("\nEnter Plan ID to delete: ");
-        long id = readLong();
+        long id = InputUtil.readLong(sc);
 
         Plan plan = service.findPlanById(id);
         if (plan == null) {
@@ -264,79 +260,5 @@ private void printActivePlans(List<Plan> plans) {
         boolean success = service.deletePlan(id);
         if (success) System.out.println("Plan '" + plan.getPlanName() + "' deleted permanently.");
         else         System.out.println("Failed to delete plan.");
-    }
-
-    // --- Validated Inputs ---
-
-    private String readPlanName() {
-        while (true) {
-            System.out.print("Enter Plan Name: ");
-            String name = sc.nextLine().trim();
-            if (ValidationUtil.isValidPlanName(name)) return name;
-            System.out.println("Invalid name. Only letters, numbers and spaces allowed (2-50 chars).");
-        }
-    }
-
-    private String readSpeed() {
-        while (true) {
-            System.out.print("Enter Speed (MBPS): ");
-            String val = sc.nextLine().trim();
-            if (ValidationUtil.isValidSpeed(val)) return val + "MBPS";
-            System.out.println("Invalid speed. Enter a number only (e.g. 300, 500, 1000).");
-        }
-    }
-
-    private String readDataLimit() {
-        while (true) {
-            System.out.print("Enter Data Limit (GB) or 'Unlimited': ");
-            String val = sc.nextLine().trim();
-            if (ValidationUtil.isValidDataLimit(val)) {
-                if (val.equalsIgnoreCase("unlimited")) return "Unlimited";
-                return val + "GB";
-            }
-            System.out.println("Invalid input. Enter a number (e.g. 60) or 'Unlimited'.");
-        }
-    }
-
-    private String readOltType() {
-        while (true) {
-            System.out.print("Enter OLT Type [OLT300/OLT500]: ");
-            String olt = sc.nextLine().trim().toUpperCase();
-            if (ValidationUtil.isValidOltType(olt)) return olt;
-            System.out.println("Invalid OLT type. Enter OLT300 or OLT500.");
-        }
-    }
-
-    private int readInt() {
-        while (true) {
-            String value = sc.nextLine().trim();
-            try {
-                return Integer.parseInt(value);
-            } catch (NumberFormatException e) {
-                System.out.print("Enter a valid number: ");
-            }
-        }
-    }
-
-    private long readLong() {
-        while (true) {
-            String value = sc.nextLine().trim();
-            try {
-                return Long.parseLong(value);
-            } catch (NumberFormatException e) {
-                System.out.print("Enter a valid id: ");
-            }
-        }
-    }
-
-    private double readDouble() {
-        while (true) {
-            String value = sc.nextLine().trim();
-            try {
-                return Double.parseDouble(value);
-            } catch (NumberFormatException e) {
-                System.out.print("Enter a valid amount: ");
-            }
-        }
     }
 }
