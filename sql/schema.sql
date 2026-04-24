@@ -233,3 +233,15 @@ CREATE TABLE email_logs (
         FOREIGN KEY (customer_id)
         REFERENCES customers(customer_id)
 );
+USE testdb;
+ 
+ALTER TABLE email_logs 
+MODIFY COLUMN email_type ENUM(
+    'ORDER_CONFIRMATION',
+    'BILL',
+    'OLT_ALERT',
+    'DISCONNECT',
+    'SERVICE_MOVE',
+    'PLAN_CHANGE',
+    'PLAN_ADMIN'
+) NOT NULL;
